@@ -26,15 +26,15 @@ app.use(function (req, res, next) {
 });
 
 app.use(express.urlencoded({ extended: true }));
-// app.use(express.json());
+app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send('this is the root page, lmao');
-})
+});
 
 // Handling request
 app.post("/request", (req, res) => {
-  console.log(`client sent: ${Object.keys(req.body)}`);
+  console.log(`client sent: ${res}`)
 
   const response = {
     essay: req.body.essay,
@@ -48,7 +48,6 @@ app.post("/request", (req, res) => {
   };
 
   res.status(200).json(response);
-})
-.listen(port, () => {
+}).listen(port, () => {
   console.log(`server is running at ${port}`);
-})
+});
