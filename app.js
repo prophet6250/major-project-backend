@@ -1,12 +1,10 @@
 const express = require("express");
-const path = require("path");
 const app = express();
 const port = process.env.PORT || 3000;
-const cors = require('cors');
+const fs = require('fs');
 
-// app.use(cors({origin: '*'}));
-
-app.use(function (req, res, next) {
+// remember this thing. this adds CORS headers to all incoming requests (ig)
+app.use((req, res, next) => {
 
   // Website you wish to allow to connect
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -25,6 +23,7 @@ app.use(function (req, res, next) {
   next();
 });
 
+// convert incoming data into json using express's body-parser thingy
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -32,9 +31,15 @@ app.get("/", (req, res) => {
   res.send('this is the root page, lmao');
 });
 
-// Handling request
 app.post("/request", (req, res) => {
-  console.log(`client sent: ${res}`)
+  console.log(req.body);
+  // replace filename with hh-mm-ss-YYYY-MM-DD
+  fs.writeFile('./temp-files/filename.temp', req.body.essay, {flag: 'w+'}, err => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+  });
 
   const response = {
     essay: req.body.essay,
