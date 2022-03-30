@@ -32,7 +32,6 @@ app.get("/", (req, res) => {
 });
 
 app.post("/request", (req, res) => {
-  console.log(req.body);
   // replace filename with hh-mm-ss-YYYY-MM-DD
   fs.writeFile('./temp-files/filename.temp', req.body.essay, {flag: 'w+'}, err => {
     if (err) {
@@ -41,7 +40,9 @@ app.post("/request", (req, res) => {
     }
   });
 
-  const response = {
+  console.log(req.body);
+
+  res.status(200).json({
     essay: req.body.essay,
     lead: ['lead?'],
     position: ['pos1', 'post2'],
@@ -49,10 +50,10 @@ app.post("/request", (req, res) => {
     counterclaim: ['counterclaim 1'],
     rebuttal: ['rebuttal 1'],
     evidence: ['evidence 1', 'evidence 2', 'evidence 3'],
-    conclusion: ['conclusion is hagga']
-  };
+    conclusion: ['conclusion is hagga'],
+  });
+});
 
-  res.status(200).json(response);
-}).listen(port, () => {
+app.listen(port, () => {
   console.log(`server is running at ${port}`);
 });
