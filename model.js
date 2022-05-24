@@ -1,5 +1,4 @@
 const express = require("express");
-const { clearInterval } = require("timers");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -27,41 +26,80 @@ app.use((req, res, next) => {
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+app.post('/request/model_1', (req, res) => {
+  console.log(req.body);
+  
+  const MODEL_NAME = `${req.body.modelName}`;
+  const { readFileSync, watch } = require('fs');
+  const { spawnSync } = require('child_process');
+  
+  /*
+  DESIGN NOTE: I am not sanitising NODLE_NAME, because... laziness. This is a security flaw. 
+  Any input containing shell metacharacters may be used to trigger arbitrary command execution
+  */
+  const modelProcess = spawnSync('bash', ['query.sh', `${MODEL_NAME}`], { stdio: 'ignore', cwd: './models', timeout: 120000 })
+  
+  if (modelProcess.status === 0) {
+    let dt = new Date();
+    let hh = dt.getHours();
+    let mm = dt.getMinutes();
+    console.log(`${hh}:${mm} - ${MODEL_NAME} ran successfully`);
+  }
+  
+  watch('./models/', (event, filename) => {
+    if (filename == 'output.json') {
+      let dt = new Date();
+      let hh = dt.getHours();
+      let mm = dt.getMinutes();
+      console.log(`${hh}:${mm} - output.json created successfully`);
 
-app.post('/request/model', (req, res) => {
+      const data = readFileSync('./models/output.json', { encoding: 'utf8' });
+      res.send(data);
+    }
+  });
+});
+
+app.post('/request/model_2', (req, res) => {
+  console.log(req.body);
+  
   /* 
-    DESIGN NOTE: I am never rejecting the promise. I don't think this is the right approach
-    and more of a duct-tape solution for this problem. Feel free to fix this issue. 
+  DESIGN NOTE: I am never rejecting the promise. I don't think this is the right approach
+  and more of a duct-tape solution for this problem. Feel free to fix this issue. 
   */
   let runModel = new Promise((resolve, reject) => {
     const MODEL_NAME = `${req.body.modelName}`;
     const { readFileSync, watch } = require('fs');
-    const { spawn } = require('child_process');
-
+    const { spawnSync } = require('child_process');
+    
     /*
-      DESIGN NOTE: I am not sanitising NODLE_NAME, because... laziness. This is a security flaw. 
-      Any input containing shell metacharacters may be used to trigger arbitrary command execution
+    DESIGN NOTE: I am not sanitising NODLE_NAME, because... laziness. This is a security flaw. 
+    Any input containing shell metacharacters may be used to trigger arbitrary command execution
     */
-    const modelProcess = spawn('bash', ['query.sh', `${MODEL_NAME}`], {stdio: 'ignore', cwd: './models', timeout: 120000})
+    const {status: exitCode} = spawnSync('bash', ['query.sh', `${MODEL_NAME}`], {stdio: 'ignore', cwd: './models', timeout: 120000, shell: true})
     
-    modelProcess.stderr.on('data', (err) => {
-      console.error(`stderr: ${err.toString()}`);
-    });
-
-    modelProcess.on('close', (exitCode) => {
-      console.log(`child process exited with code ${exitCode}`);
-    });
+    if (exitCode === 0) {
+      let dt = new Date();
+      let hh = dt.getHours();
+      let mm = dt.getMinutes();
+      console.log(`${hh}:${mm} - ${MODEL_NAME} ran successfully`);
+    }
     
-    watch('./models', (event, filename) => {
+    watch('./models/', (event, filename) => {
       if (filename == 'output.json') {
-        resolve(readFileSync('./models/output.json', {encoding: 'utf8'}));
+        let dt = new Date();
+        let hh = dt.getHours();
+        let mm = dt.getMinutes();
+        console.log(`${hh}:${mm} - output.json created successfully`);
+        
+        const data = readFileSync('./models/output.json', { encoding: 'utf8' });
+        resolve(data);
       }
     });
   });
   
   runModel
   .then(result => {
-    res.end(result.toString());
+    res.status(200).send(result);
   })
   .catch(err => {
     console.error(err);
@@ -69,5 +107,5 @@ app.post('/request/model', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`listening on port ${port}...`)
+  console.log(`model server running on port ${port}`);
 });

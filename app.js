@@ -28,12 +28,8 @@ app.use((req, res, next) => {
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send('this is the root page, lmao');
-});
-
 app.post("/request", (req, res) => {
-  // console.dir(req.body, {depth: null});
+  console.log(req.body);
 
   const FILE_NAME = '12.txt';
   const MODEL_NAME = req.body.modelName;
@@ -45,19 +41,24 @@ app.post("/request", (req, res) => {
     }
   });
 
+  console.log(`file ${FILE_NAME} written successfully`)
+  console.log('sending post request to model.js');
+
   axios
     .post('http://localhost:5000/request/model', {
       modelName: MODEL_NAME,
       essay: req.body.essay,
     })
     .then(result => {
+      console.log('model ran successfully');
       res.status(200).send(result);
     })
     .catch(error => {
+      console.error(error.toJSON());
       res.status(500).send(error);
     });
 });
 
 app.listen(port, () => {
-  console.log(`server is running at ${port}`);
+  console.log(`main server is running at ${port}`);
 });
