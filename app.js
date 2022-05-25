@@ -19,23 +19,20 @@ app.post('/request', (req, res) => {
   const { readFileSync, writeFileSync } = require('fs');
   const { spawnSync } = require('child_process');
 
-  console.log(req.body);
+  console.log(`STEP 1: incoming request to run model ${MODEL_NAME}...`);
 
-  writeFileSync(`./models/test/${FILE_NAME}`, req.body.essay, { flag: 'w+' }, err => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-  });
+  writeFileSync(`./models/test/${FILE_NAME}`, req.body.essay, { flag: 'w+' });
+  console.log(`STEP 2: ${FILE_NAME} successfully written...`);
   
   /*
   DESIGN NOTE: I am not sanitising MODEL_NAME, because... laziness. This is a security flaw. 
   Any input containing shell metacharacters may be used to trigger arbitrary command execution
   */
   spawnSync('bash', ['query.sh', MODEL_NAME], { cwd: './models' });
+  console.log(`STEP 3: ${MODEL_NAME} ran successfully`)
 
   const data = readFileSync('./models/output.json', { encoding: 'utf-8'});
-
+  console.log('STEP 4: output.json read successfully. sending response to client...');
   res.send(data);
 });
 
