@@ -29,7 +29,7 @@ app.post('/request', (req, res) => {
   });
   
   /*
-  DESIGN NOTE: I am not sanitising NODLE_NAME, because... laziness. This is a security flaw. 
+  DESIGN NOTE: I am not sanitising MODEL_NAME, because... laziness. This is a security flaw. 
   Any input containing shell metacharacters may be used to trigger arbitrary command execution
   */
   spawnSync('bash', ['query.sh', MODEL_NAME], { cwd: './models' });
